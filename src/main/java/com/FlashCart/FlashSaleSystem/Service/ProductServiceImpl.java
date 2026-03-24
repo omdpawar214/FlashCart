@@ -29,4 +29,11 @@ public class ProductServiceImpl implements ProductService{
         //returning the result
         return productDTOS;
     }
+
+    @Override
+    public ProductDTO geProductById(Long productId) {
+        Product product = productRepository.findById(productId).orElseThrow(()->
+                new RuntimeException("Product Does not exist with ProductId: "+productId));
+        return modelMapper.map(product, ProductDTO.class);
+    }
 }
