@@ -1,6 +1,7 @@
 package com.FlashCart.FlashSaleSystem.Service;
 
 import com.FlashCart.FlashSaleSystem.DTOs.ProductDTO;
+import com.FlashCart.FlashSaleSystem.ErrorControl.APIException;
 import com.FlashCart.FlashSaleSystem.Models.Product;
 import com.FlashCart.FlashSaleSystem.Repository.ProductRepository;
 import jakarta.transaction.Transactional;
@@ -23,6 +24,7 @@ public class ProductServiceImpl implements ProductService{
     public List<ProductDTO> getAllProducts() {
         //fetching all the products from repository
         List<Product> products = productRepository.findAll();
+        if (products.isEmpty()) throw new APIException("Products Not Found!!");
         //converting products to productDTO
         List<ProductDTO> productDTOS = new ArrayList<>();
         for (Product product:products){
@@ -35,6 +37,9 @@ public class ProductServiceImpl implements ProductService{
     @Transactional
     @Override
     public ProductDTO createProduct(ProductDTO productDTO) {
+        //check the product exist or not
+        Product oldProduct = productRepository.findByName(productDTO.getName());
+        if (oldProduct!=null) throw new APIException("Product with Product name: "+productDTO.getName()+" already exist in the System");
         //convert the dto tp product
         Product product  = modelMapper.map(productDTO, Product.class);
         //save the product to repository
