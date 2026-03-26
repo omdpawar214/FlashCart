@@ -8,15 +8,19 @@ public class FlashSaleDTO {
     private LocalDateTime endsAt;
     private Integer saleStock;
     private Long ProductId;
+    private Double specialPrice;
+
     public FlashSaleDTO() {
     }
 
-    public FlashSaleDTO(Long saleId, LocalDateTime startAt, Integer saleStock, LocalDateTime endsAt,Long ProductId) {
+    public FlashSaleDTO(Long saleId, LocalDateTime startAt, Integer saleStock, LocalDateTime endsAt,Long ProductId,Double specialPrice) {
         this.saleId = saleId;
         this.startAt = startAt;
         this.saleStock = saleStock;
         this.endsAt = endsAt;
         this.ProductId = ProductId;
+        this.specialPrice=specialPrice;
+
     }
 
     public Integer getSaleStock() {
@@ -57,5 +61,13 @@ public class FlashSaleDTO {
 
     public void setProductId(Long productId) {
         ProductId = productId;
+    }
+
+    public Double getSpecialPrice() {
+        return specialPrice;
+    }
+
+    public void setSpecialPrice(Double specialPrice) {
+        this.specialPrice = specialPrice;
     }
 }

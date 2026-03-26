@@ -13,7 +13,7 @@ public class FlashSale {
     private LocalDateTime startAt;
     private LocalDateTime endsAt;
     private Integer saleStock;
-
+    private Double specialPrice;
 
     @OneToOne
     @JoinColumn(name = "Product_Id")
@@ -22,11 +22,21 @@ public class FlashSale {
     public FlashSale() {
     }
 
-    public FlashSale(Long saleId, LocalDateTime startAt, Integer saleStock, LocalDateTime endsAt) {
+    public FlashSale(Long saleId, LocalDateTime startAt, Integer saleStock, LocalDateTime endsAt ,Double specialPrice) {
         this.saleId = saleId;
         this.startAt = startAt;
         this.saleStock = saleStock;
         this.endsAt = endsAt;
+        this.specialPrice=specialPrice;
+    }
+
+    public FlashSale(Long saleId, LocalDateTime startAt, LocalDateTime endsAt, Integer saleStock, Product product,Double specialPrice) {
+        this.saleId = saleId;
+        this.startAt = startAt;
+        this.endsAt = endsAt;
+        this.saleStock = saleStock;
+        this.product = product;
+        this.specialPrice=specialPrice;
     }
 
     public Integer getSaleStock() {
@@ -67,5 +77,13 @@ public class FlashSale {
 
     public void setProduct(Product product) {
         this.product = product;
+    }
+
+    public Double getSpecialPrice() {
+        return specialPrice;
+    }
+
+    public void setSpecialPrice(Double specialPrice) {
+        this.specialPrice = specialPrice;
     }
 }
