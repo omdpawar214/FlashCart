@@ -15,7 +15,7 @@ public class FlashSale {
     private Integer saleStock;
     private Double specialPrice;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "Product_Id")
     private Product product;
 
