@@ -53,4 +53,15 @@ public class FlashSaleServiceImpl implements FlashSaleService{
         //returning the dto of saved model
         return modelMapper.map(savedSale, FlashSaleDTO.class);
     }
+
+    @Override
+    public FlashSaleDTO getSaleById(Long saleId) {
+        //fetch the sale byId
+        FlashSale sale = flashSaleRepository.findById(saleId).orElseThrow(()->
+                new ResourceNotFoundException("FLashSale","flashSaleID",saleId));
+        //converting to the DTO
+        FlashSaleDTO flashSaleDTO = modelMapper.map(sale, FlashSaleDTO.class);
+        //returning result
+        return flashSaleDTO;
+    }
 }

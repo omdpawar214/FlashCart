@@ -4,10 +4,7 @@ import com.FlashCart.FlashSaleSystem.DTOs.FlashSaleDTO;
 import com.FlashCart.FlashSaleSystem.Service.FlashSaleService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/flashSale")
@@ -22,5 +19,11 @@ public class FlashSaleController {
     @PostMapping
     public ResponseEntity<FlashSaleDTO> createSale(@RequestBody FlashSaleDTO flashSaleDTO){
         return new ResponseEntity<>(flashSaleService.createSale(flashSaleDTO), HttpStatus.CREATED);
+    }
+
+    //method to get the sale using id
+    @GetMapping("/{saleId}")
+    public ResponseEntity<FlashSaleDTO> getSaleById(@PathVariable Long saleId){
+        return new ResponseEntity<>(flashSaleService.getSaleById(saleId),HttpStatus.OK);
     }
 }
