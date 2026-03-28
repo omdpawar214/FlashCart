@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/flashSale")
 public class FlashSaleController {
@@ -25,5 +27,11 @@ public class FlashSaleController {
     @GetMapping("/{saleId}")
     public ResponseEntity<FlashSaleDTO> getSaleById(@PathVariable Long saleId){
         return new ResponseEntity<>(flashSaleService.getSaleById(saleId),HttpStatus.OK);
+    }
+
+    //method to get all the sales
+    @GetMapping
+    public ResponseEntity<List<FlashSaleDTO>> getAllSales(){
+        return new ResponseEntity<>(flashSaleService.getAllSales(),HttpStatus.OK);
     }
 }

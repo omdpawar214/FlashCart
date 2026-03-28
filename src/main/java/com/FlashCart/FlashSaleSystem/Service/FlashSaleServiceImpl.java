@@ -11,6 +11,9 @@ import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class FlashSaleServiceImpl implements FlashSaleService{
     private final ModelMapper modelMapper;
@@ -63,5 +66,18 @@ public class FlashSaleServiceImpl implements FlashSaleService{
         FlashSaleDTO flashSaleDTO = modelMapper.map(sale, FlashSaleDTO.class);
         //returning result
         return flashSaleDTO;
+    }
+
+    @Override
+    public List<FlashSaleDTO> getAllSales() {
+        //fetch all sales
+        List<FlashSale> flashSales = flashSaleRepository.findAll();
+        //converting sales into DTOs
+        List<FlashSaleDTO> flashSaleDTOS = new ArrayList<>();
+        for (FlashSale sale:flashSales){
+            flashSaleDTOS.add(modelMapper.map(sale, FlashSaleDTO.class));
+        }
+
+        return flashSaleDTOS;
     }
 }
