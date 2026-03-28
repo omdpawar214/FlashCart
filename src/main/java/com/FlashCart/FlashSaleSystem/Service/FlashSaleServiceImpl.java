@@ -134,6 +134,7 @@ public class FlashSaleServiceImpl implements FlashSaleService{
     }
 
     @Override
+    @Transactional
     public String deleteSale(Long saleId) {
         //fetch the sale
         FlashSale sale = flashSaleRepository.findById(saleId).orElseThrow(()->
