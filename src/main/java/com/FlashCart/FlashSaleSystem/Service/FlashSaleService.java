@@ -12,4 +12,6 @@ public interface FlashSaleService {
     List<FlashSaleDTO> getAllSales();
 
     List<FlashSaleDTO> getAllActiveSales();
+
+    FlashSaleDTO updateSale(FlashSaleDTO flashSaleDTO);
 }

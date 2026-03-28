@@ -41,4 +41,10 @@ public class FlashSaleController {
         return new ResponseEntity<>(flashSaleService.getAllActiveSales(),HttpStatus.OK);
 
     }
+
+    //method to update the Flash sale
+    @PutMapping
+    public ResponseEntity<FlashSaleDTO> updateSale(@RequestBody FlashSaleDTO flashSaleDTO) {
+        return new ResponseEntity<>(flashSaleService.updateSale(flashSaleDTO), HttpStatus.CREATED);
+    }
 }

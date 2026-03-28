@@ -102,4 +102,34 @@ public class FlashSaleServiceImpl implements FlashSaleService{
         //return the separated list
         return activeFlashSaleDTOS;
     }
+
+    @Override
+    @Transactional
+    public FlashSaleDTO updateSale(FlashSaleDTO flashSaleDTO) {
+        Long saleId  = flashSaleDTO.getSaleId();
+        //checking if ehh updated stock is valid
+        Long productId = flashSaleDTO.getProductId();
+        Product product = productRepository.findById(productId).orElseThrow(()->
+                new ResourceNotFoundException("Product","Product_id",productId));
+        Integer saleStock = flashSaleDTO.getSaleStock();
+        Integer productStock = product.getStock();
+        if (saleStock>productStock){
+            throw new APIException("Product Out of Stock!!!");
+        }
+        //fetch the existing sale
+        FlashSale existingSale = flashSaleRepository.findById(saleId).orElseThrow(()->
+                new ResourceNotFoundException("FLashSale","flashSaleID",saleId));
+        //changing the existing sale
+        existingSale.setSaleStock(flashSaleDTO.getSaleStock());
+        existingSale.setStartAt(flashSaleDTO.getStartAt());
+        existingSale.setEndsAt(flashSaleDTO.getEndsAt());
+        existingSale.setSpecialPrice(flashSaleDTO.getSpecialPrice());
+        existingSale.setProduct(product);
+        //save the updated sale
+        FlashSale savedSale = flashSaleRepository.save(existingSale);
+        //convert updated sale to DTO
+        FlashSaleDTO flashSaleDTO1 = modelMapper.map(savedSale, FlashSaleDTO.class);
+        //return the DTO
+        return flashSaleDTO1;
+    }
 }
