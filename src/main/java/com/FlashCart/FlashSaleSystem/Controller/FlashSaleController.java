@@ -34,4 +34,11 @@ public class FlashSaleController {
     public ResponseEntity<List<FlashSaleDTO>> getAllSales(){
         return new ResponseEntity<>(flashSaleService.getAllSales(),HttpStatus.OK);
     }
+
+    //method to get all the active sales
+    @GetMapping("/active/")
+    private ResponseEntity<List<FlashSaleDTO>> getAllActiveSales(){
+        return new ResponseEntity<>(flashSaleService.getAllActiveSales(),HttpStatus.OK);
+
+    }
 }

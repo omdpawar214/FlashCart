@@ -10,4 +10,6 @@ public interface FlashSaleService {
     FlashSaleDTO getSaleById(Long saleId);
 
     List<FlashSaleDTO> getAllSales();
+
+    List<FlashSaleDTO> getAllActiveSales();
 }

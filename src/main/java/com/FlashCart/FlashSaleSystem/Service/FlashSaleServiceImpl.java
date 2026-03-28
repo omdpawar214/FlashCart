@@ -11,6 +11,7 @@ import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,5 +80,26 @@ public class FlashSaleServiceImpl implements FlashSaleService{
         }
 
         return flashSaleDTOS;
+    }
+
+    @Override
+    public List<FlashSaleDTO> getAllActiveSales() {
+        //get all the FlashSales from the repository
+        List<FlashSale> flashSales = flashSaleRepository.findAll();
+        //separate active sales from the list of sales
+        List<FlashSale> ActiveFlashSales = new ArrayList<>();
+        for (FlashSale sale:flashSales){
+            if(sale.getEndsAt().isAfter(LocalDateTime.now())){
+                ActiveFlashSales.add(sale);
+            }
+        }
+        if (ActiveFlashSales.isEmpty()) throw new APIException("Currently No Active Sales");
+        //converting Active sales TO DTOs
+        List<FlashSaleDTO> activeFlashSaleDTOS = new ArrayList<>();
+        for (FlashSale sale:ActiveFlashSales){
+            activeFlashSaleDTOS.add(modelMapper.map(sale, FlashSaleDTO.class));
+        }
+        //return the separated list
+        return activeFlashSaleDTOS;
     }
 }
