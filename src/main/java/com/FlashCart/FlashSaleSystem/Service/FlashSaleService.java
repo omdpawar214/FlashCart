@@ -14,4 +14,6 @@ public interface FlashSaleService {
     List<FlashSaleDTO> getAllActiveSales();
 
     FlashSaleDTO updateSale(FlashSaleDTO flashSaleDTO);
+
+    String deleteSale(Long saleId);
 }

@@ -45,6 +45,12 @@ public class FlashSaleController {
     //method to update the Flash sale
     @PutMapping
     public ResponseEntity<FlashSaleDTO> updateSale(@RequestBody FlashSaleDTO flashSaleDTO) {
-        return new ResponseEntity<>(flashSaleService.updateSale(flashSaleDTO), HttpStatus.CREATED);
+        return new ResponseEntity<>(flashSaleService.updateSale(flashSaleDTO), HttpStatus.ACCEPTED);
+    }
+
+    //method to delete sale
+    @DeleteMapping("/{saleId}")
+    public ResponseEntity<String> deleteSale(@PathVariable Long saleId) {
+        return new ResponseEntity<>(flashSaleService.deleteSale(saleId), HttpStatus.OK);
     }
 }

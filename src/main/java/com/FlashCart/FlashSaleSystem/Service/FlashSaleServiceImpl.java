@@ -132,4 +132,15 @@ public class FlashSaleServiceImpl implements FlashSaleService{
         //return the DTO
         return flashSaleDTO1;
     }
+
+    @Override
+    public String deleteSale(Long saleId) {
+        //fetch the sale
+        FlashSale sale = flashSaleRepository.findById(saleId).orElseThrow(()->
+                new ResourceNotFoundException("FLashSale","flashSaleID",saleId));
+        //delete sale
+        flashSaleRepository.delete(sale);
+        //return result
+        return "FlashSale with Id-"+saleId+" has been removed successfully !!";
+    }
 }
