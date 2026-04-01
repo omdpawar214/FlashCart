@@ -6,6 +6,7 @@ import org.modelmapper.internal.bytebuddy.asm.Advice;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "orders")
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
