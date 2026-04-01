@@ -43,6 +43,10 @@ public class FlashSaleServiceImpl implements FlashSaleService{
         if (saleStock>productStock){
             throw new APIException("Product Out of Stock!!!");
         }
+        //sale timing validation
+        if(flashSaleDTO.getEndsAt().isAfter(LocalDateTime.now())){
+            throw new APIException("New sale Cannot ends before current time");
+        }
         //converting dto to model
         FlashSale flashSale = modelMapper.map(flashSaleDTO, FlashSale.class);
         flashSale.setProduct(product);
