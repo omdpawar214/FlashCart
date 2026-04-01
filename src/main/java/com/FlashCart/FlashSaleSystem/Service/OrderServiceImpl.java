@@ -73,4 +73,34 @@ public class OrderServiceImpl implements OrderService{
         return modelMapper.map(savedOrder, OrderDTO.class);
     }
 
+    @Override
+    @Transactional
+    public String pay(Long orderId, Boolean paymentSuccess) {
+        //validate the order
+        Order currOrder = orderRepository.findById(orderId).orElseThrow(()->
+                new ResourceNotFoundException("order","orderId",orderId));
+        FlashSale sale = currOrder.getFlashSale();
+        //validating order status
+        if (!currOrder.getPaymentStatus().equals(PaymentStatus.PENDING.name())) {
+            throw new APIException("Payment already processed");
+        }
+        //if payment is success update the payment and order status in order
+        if(paymentSuccess){
+            currOrder.setPaymentStatus(String.valueOf(PaymentStatus.SUCCESS));
+            currOrder.setStatus(String.valueOf(OrderStatus.SUCCESS));
+            orderRepository.save(currOrder);
+            return "Payment Success";
+        }
+        //else update the payment and order status and return the stock to the sale
+        else {
+            currOrder.setPaymentStatus(String.valueOf(PaymentStatus.FAILED));
+            currOrder.setStatus(String.valueOf(OrderStatus.CANCELLED));
+            sale.setSaleStock(sale.getSaleStock()+currOrder.getQuantity());
+            //saving the updated models
+            flashSaleRepository.save(sale);
+            orderRepository.save(currOrder);
+
+            return "Order cancelled!";
+        }
+    }
 }

@@ -1,7 +1,11 @@
 package com.FlashCart.FlashSaleSystem.Controller;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.FlashCart.FlashSaleSystem.DTOs.OrderDTO;
+import com.FlashCart.FlashSaleSystem.Service.OrderService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/order")
@@ -18,4 +22,10 @@ public class OrderController {
         return new ResponseEntity<>(orderService.purchase(saleId,userId,quantity), HttpStatus.OK);
     }
 
+    //method to pay for the order
+    @RequestMapping("/{orderId}/pay")
+    public ResponseEntity<String> payForOrder(@PathVariable Long orderId,
+                                              @RequestParam Boolean paymentSuccess){
+        return new ResponseEntity<>(orderService.pay(orderId,paymentSuccess),HttpStatus.OK);
+    }
 }
