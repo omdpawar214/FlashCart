@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -102,5 +103,15 @@ public class OrderServiceImpl implements OrderService{
 
             return "Order cancelled!";
         }
+    }
+
+    @Override
+    public List<OrderDTO> getAll() {
+        List<Order> orders = orderRepository.findAll();
+        List<OrderDTO> orderDTOS = new ArrayList<>();
+        for (Order order:orders){
+            orderDTOS.add(modelMapper.map(order, OrderDTO.class));
+        }
+        return orderDTOS;
     }
 }

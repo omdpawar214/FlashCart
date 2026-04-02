@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/order")
 public class OrderController {
@@ -28,4 +30,11 @@ public class OrderController {
                                               @RequestParam Boolean paymentSuccess){
         return new ResponseEntity<>(orderService.pay(orderId,paymentSuccess),HttpStatus.OK);
     }
+
+    //method to get all the orders
+    @GetMapping
+    public ResponseEntity<List<OrderDTO>> getAll(){
+        return new ResponseEntity<>(orderService.getAll(),HttpStatus.OK);
+    }
+
 }
