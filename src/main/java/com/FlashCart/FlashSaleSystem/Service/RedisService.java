@@ -22,6 +22,9 @@ public class RedisService {
     public Long decreaseStock(String key) {
         return redisTemplate.opsForValue().decrement(key);
     }
+    public Long decreaseStock(String key, int quantity) {
+        return redisTemplate.opsForValue().increment(key, -quantity);
+    }
 
     public Long increaseStock(String key, int quantity) {
         return redisTemplate.opsForValue().increment(key, quantity);
