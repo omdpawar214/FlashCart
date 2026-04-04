@@ -9,6 +9,7 @@ import com.FlashCart.FlashSaleSystem.Repository.FlashSaleRepository;
 import com.FlashCart.FlashSaleSystem.Repository.ProductRepository;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -26,6 +27,8 @@ public class FlashSaleServiceImpl implements FlashSaleService{
         this.flashSaleRepository = flashSaleRepository;
         this.productRepository = productRepository;
     }
+    @Autowired
+    private RedisService redisService;
 
     @Override
     @Transactional
@@ -58,6 +61,11 @@ public class FlashSaleServiceImpl implements FlashSaleService{
 
         if (dbSale!=null) throw new APIException("Sale Already Exists");
         FlashSale savedSale = flashSaleRepository.save(flashSale);
+
+        //add stock to redis
+        String redisKey = "FlashSale:Stock"+savedSale.getSaleId();
+        redisService.setStock(redisKey,savedSale.getSaleStock());
+
         //returning the dto of saved model
         return modelMapper.map(savedSale, FlashSaleDTO.class);
     }
