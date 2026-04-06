@@ -2,6 +2,7 @@ package com.FlashCart.FlashSaleSystem.Service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -10,7 +11,8 @@ import java.time.Duration;
 public class RedisLockService {
 
     @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private StringRedisTemplate redisTemplate;
+
 
     public boolean acquireLock(String key, long timeout) {
         Boolean success = redisTemplate.opsForValue()
