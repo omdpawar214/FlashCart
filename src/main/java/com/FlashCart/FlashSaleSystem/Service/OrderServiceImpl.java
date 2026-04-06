@@ -37,10 +37,13 @@ public class OrderServiceImpl implements OrderService{
     private ModelMapper modelMapper;
     @Autowired
     private RedisService redisService;
+    @Autowired
+    private RedisLockService redisLockService;
 
     @Override
     @Transactional
     public OrderDTO purchase(Long saleId, Long userId, Integer quantity) {
+
         //checking if user exists
         User currUser = userRepository.findById(userId).orElseThrow(()->
                 new ResourceNotFoundException("User","userId",userId));
@@ -48,36 +51,49 @@ public class OrderServiceImpl implements OrderService{
         String key = saleId+"_"+userId;
         Order existingOrder = orderRepository.findByIdempotencyKey(key);
         if (existingOrder!=null) throw new APIException("Current User have already ordered From this sale");
-        //check for Active flash sale
 
+        //check for Active flash sale
         FlashSale sale = flashSaleRepository.findById(saleId).orElseThrow(()->
                 new ResourceNotFoundException("flashSale","FlashSaleId",saleId));
         if (sale.getStartAt().isAfter(LocalDateTime.now())||sale.getEndsAt().isBefore(LocalDateTime.now())){
             throw new APIException("Sale with id-"+saleId+" is InActive");
         }
-        //check for the quantity is available using redis and decrementing the quantity from redis not touching the database
-        String redisKey = "FlashSale:Stock"+sale.getSaleId();
-        Long remaining = redisService.decreaseStock(redisKey,quantity);
-        if(remaining<0){
-            redisService.increaseStock(redisKey,quantity);
-            throw new APIException("Out of Stock!!");
+
+        // adding the redis distributed lock to further process
+        String lockKey = "lock:flashSale:"+saleId;
+        boolean lockAcquired = redisLockService.acquireLock(lockKey,3000);
+        if (!lockAcquired) {
+            throw new APIException("Too many requests, please try again");
         }
-             //if (sale.getSaleStock()<quantity) throw new APIException("Out of Stock!!");
-        //create the order
-        Order currentOrder = new Order();
-        currentOrder.setIdempotencyKey(key);
-        currentOrder.setCreatedAt(LocalDateTime.now());
-        currentOrder.setPaymentStatus(String.valueOf(PaymentStatus.PENDING));
-        currentOrder.setStatus(String.valueOf(OrderStatus.CREATED));
-        currentOrder.setUser(currUser);
-        currentOrder.setFlashSale(sale);
-        //sale.setSaleStock(sale.getSaleStock()-quantity); don't using this, because we are caching the stock in redis and updated there
-        currentOrder.setQuantity(quantity);
-        currentOrder.setTotalPrice(sale.getSpecialPrice()*quantity);
-        //save the order
-        Order savedOrder = orderRepository.save(currentOrder);
-        //return the DTO
-        return modelMapper.map(savedOrder, OrderDTO.class);
+        try {//critical section
+
+            //check for the quantity is available using redis and decrementing the quantity from redis not touching the database
+            String redisKey = "FlashSale:Stock" + sale.getSaleId();
+            Long remaining = redisService.decreaseStock(redisKey, quantity);
+            if (remaining < 0) {
+                redisService.increaseStock(redisKey, quantity);
+                throw new APIException("Out of Stock!!");
+            }
+            //if (sale.getSaleStock()<quantity) throw new APIException("Out of Stock!!");
+            //create the order
+            Order currentOrder = new Order();
+            currentOrder.setIdempotencyKey(key);
+            currentOrder.setCreatedAt(LocalDateTime.now());
+            currentOrder.setPaymentStatus(String.valueOf(PaymentStatus.PENDING));
+            currentOrder.setStatus(String.valueOf(OrderStatus.CREATED));
+            currentOrder.setUser(currUser);
+            currentOrder.setFlashSale(sale);
+            //sale.setSaleStock(sale.getSaleStock()-quantity); don't using this, because we are caching the stock in redis and updated there
+            currentOrder.setQuantity(quantity);
+            currentOrder.setTotalPrice(sale.getSpecialPrice() * quantity);
+            //save the order
+            Order savedOrder = orderRepository.save(currentOrder);
+            //return the DTO
+            return modelMapper.map(savedOrder, OrderDTO.class);
+        }finally {
+            //releasing the lock
+            redisLockService.releaseLock(lockKey);
+        }
     }
 
     @Override
