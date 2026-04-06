@@ -9,4 +9,6 @@ import java.time.LocalDateTime;
 @Repository
 public interface FlashSaleRepository extends JpaRepository<FlashSale ,Long> {
     FlashSale findByProduct_ProductIdAndStartAtAndEndsAt(long productId, LocalDateTime startAt, LocalDateTime endsAt);
+
+    boolean existsByProduct_ProductId(Long productId);
 }

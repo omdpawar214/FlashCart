@@ -46,8 +46,14 @@ public class FlashSaleServiceImpl implements FlashSaleService{
         if (saleStock>productStock){
             throw new APIException("Product Out of Stock!!!");
         }
+
+        // Check if flash sale already exists for this product
+        if (flashSaleRepository.existsByProduct_ProductId(productId)){
+            throw new APIException("Flash sale already exists for this product");
+        }
+
         //sale timing validation
-        if(flashSaleDTO.getEndsAt().isAfter(LocalDateTime.now())){
+        if(flashSaleDTO.getEndsAt().isBefore(LocalDateTime.now())){
             throw new APIException("New sale Cannot ends before current time");
         }
         //converting dto to model

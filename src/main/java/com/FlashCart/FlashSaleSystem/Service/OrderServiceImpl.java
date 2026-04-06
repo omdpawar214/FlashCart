@@ -35,6 +35,8 @@ public class OrderServiceImpl implements OrderService{
     private UserRepository userRepository;
     @Autowired
     private ModelMapper modelMapper;
+    @Autowired
+    private RedisService redisService;
 
     @Override
     @Transactional
@@ -53,8 +55,14 @@ public class OrderServiceImpl implements OrderService{
         if (sale.getStartAt().isAfter(LocalDateTime.now())||sale.getEndsAt().isBefore(LocalDateTime.now())){
             throw new APIException("Sale with id-"+saleId+" is InActive");
         }
-        //check for the quantity
-        if (sale.getSaleStock()<quantity) throw new APIException("Out of Stock!!");
+        //check for the quantity is available using redis and decrementing the quantity from redis not touching the database
+        String redisKey = "FlashSale:Stock"+sale.getSaleId();
+        Long remaining = redisService.decreaseStock(redisKey,quantity);
+        if(remaining<0){
+            redisService.increaseStock(redisKey,quantity);
+            throw new APIException("Out of Stock!!");
+        }
+             //if (sale.getSaleStock()<quantity) throw new APIException("Out of Stock!!");
         //create the order
         Order currentOrder = new Order();
         currentOrder.setIdempotencyKey(key);
@@ -63,12 +71,10 @@ public class OrderServiceImpl implements OrderService{
         currentOrder.setStatus(String.valueOf(OrderStatus.CREATED));
         currentOrder.setUser(currUser);
         currentOrder.setFlashSale(sale);
-
-        sale.setSaleStock(sale.getSaleStock()-quantity);
+        //sale.setSaleStock(sale.getSaleStock()-quantity); don't using this, because we are caching the stock in redis and updated there
         currentOrder.setQuantity(quantity);
         currentOrder.setTotalPrice(sale.getSpecialPrice()*quantity);
         //save the order
-        flashSaleRepository.save(sale);
         Order savedOrder = orderRepository.save(currentOrder);
         //return the DTO
         return modelMapper.map(savedOrder, OrderDTO.class);
@@ -85,20 +91,26 @@ public class OrderServiceImpl implements OrderService{
         if (!currOrder.getPaymentStatus().equals(PaymentStatus.PENDING.name())) {
             throw new APIException("Payment already processed");
         }
+        //creating redis key for stock handling
+        String redisKey = "FlashSale:Stock"+sale.getSaleId();
         //if payment is success update the payment and order status in order
         if(paymentSuccess){
             currOrder.setPaymentStatus(String.valueOf(PaymentStatus.SUCCESS));
             currOrder.setStatus(String.valueOf(OrderStatus.SUCCESS));
             orderRepository.save(currOrder);
+            //update the stock in the sale database
+            sale.setSaleStock(sale.getSaleStock()-currOrder.getQuantity());
+            //saving the sale
+            flashSaleRepository.save(sale);
             return "Payment Success";
         }
-        //else update the payment and order status and return the stock to the sale
+        //else update the payment and order status and return the stock to the redis
         else {
             currOrder.setPaymentStatus(String.valueOf(PaymentStatus.FAILED));
             currOrder.setStatus(String.valueOf(OrderStatus.CANCELLED));
-            sale.setSaleStock(sale.getSaleStock()+currOrder.getQuantity());
-            //saving the updated models
-            flashSaleRepository.save(sale);
+            //adding the items to the redis again
+            redisService.increaseStock(redisKey,currOrder.getQuantity());
+            //saving the updated models;
             orderRepository.save(currOrder);
 
             return "Order cancelled!";
