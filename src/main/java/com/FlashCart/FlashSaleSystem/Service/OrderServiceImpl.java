@@ -16,6 +16,7 @@ import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -47,10 +48,6 @@ public class OrderServiceImpl implements OrderService{
         //checking if user exists
         User currUser = userRepository.findById(userId).orElseThrow(()->
                 new ResourceNotFoundException("User","userId",userId));
-        //check for Idempotency key constraints
-        String key = saleId+"_"+userId;
-        Order existingOrder = orderRepository.findByIdempotencyKey(key);
-        if (existingOrder!=null) throw new APIException("Current User have already ordered From this sale");
 
         //check for Active flash sale
         FlashSale sale = flashSaleRepository.findById(saleId).orElseThrow(()->
@@ -66,6 +63,11 @@ public class OrderServiceImpl implements OrderService{
             throw new APIException("Too many requests, please try again");
         }
         try {//critical section
+
+            //check for Idempotency key constraints
+            String key = saleId+"_"+userId;
+            Order existingOrder = orderRepository.findByIdempotencyKey(key);
+            if (existingOrder!=null) throw new APIException("Current User have already ordered From this sale");
 
             //check for the quantity is available using redis and decrementing the quantity from redis not touching the database
             String redisKey = "FlashSale:Stock" + sale.getSaleId();
@@ -88,6 +90,11 @@ public class OrderServiceImpl implements OrderService{
             currentOrder.setTotalPrice(sale.getSpecialPrice() * quantity);
             //save the order
             Order savedOrder = orderRepository.save(currentOrder);
+
+            //adding time to live for the order if the payment not done for order in stipulated time
+            String expiryKey = "order:expiry:" + savedOrder.getOrderId();
+            redisService.setWithTTL(expiryKey, "PENDING", 30);
+
             //return the DTO
             return modelMapper.map(savedOrder, OrderDTO.class);
         }finally {
@@ -118,6 +125,11 @@ public class OrderServiceImpl implements OrderService{
             sale.setSaleStock(sale.getSaleStock()-currOrder.getQuantity());
             //saving the sale
             flashSaleRepository.save(sale);
+
+            //removing the ttl form the order
+            String expiryKey = "order:expiry:" + orderId;
+            redisService.delete(expiryKey);
+
             return "Payment Success";
         }
         //else update the payment and order status and return the stock to the redis

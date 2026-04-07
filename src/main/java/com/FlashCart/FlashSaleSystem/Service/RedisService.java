@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.TimeUnit;
+
 @Service
 public class RedisService {
 
@@ -28,5 +30,13 @@ public class RedisService {
 
     public Long increaseStock(String key, int quantity) {
         return redisTemplate.opsForValue().increment(key, quantity);
+    }
+
+    public void setWithTTL(String key, String value, long seconds) {
+        redisTemplate.opsForValue().set(key, value, seconds, TimeUnit.SECONDS);
+    }
+
+    public void delete(String key) {
+        redisTemplate.delete(key);
     }
 }
