@@ -1,6 +1,5 @@
 package com.FlashCart.FlashSaleSystem.Service;
 
-import com.FlashCart.FlashSaleSystem.DTOs.FlashSaleDTO;
 import com.FlashCart.FlashSaleSystem.DTOs.OrderDTO;
 import com.FlashCart.FlashSaleSystem.Enums.OrderStatus;
 import com.FlashCart.FlashSaleSystem.Enums.PaymentStatus;
@@ -15,14 +14,11 @@ import com.FlashCart.FlashSaleSystem.Repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 public class OrderServiceImpl implements OrderService{

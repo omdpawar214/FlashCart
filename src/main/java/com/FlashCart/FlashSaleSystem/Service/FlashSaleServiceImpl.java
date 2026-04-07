@@ -146,9 +146,8 @@ public class FlashSaleServiceImpl implements FlashSaleService{
         //save the updated sale
         FlashSale savedSale = flashSaleRepository.save(existingSale);
         //convert updated sale to DTO
-        FlashSaleDTO flashSaleDTO1 = modelMapper.map(savedSale, FlashSaleDTO.class);
         //return the DTO
-        return flashSaleDTO1;
+        return modelMapper.map(savedSale, FlashSaleDTO.class);
     }
 
     @Override
