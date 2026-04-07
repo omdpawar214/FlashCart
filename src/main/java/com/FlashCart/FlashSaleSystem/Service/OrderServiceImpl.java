@@ -93,7 +93,7 @@ public class OrderServiceImpl implements OrderService{
 
             //adding time to live for the order if the payment not done for order in stipulated time
             String expiryKey = "order:expiry:" + savedOrder.getOrderId();
-            redisService.setWithTTL(expiryKey, "PENDING", 30);
+            redisService.setWithTTL(expiryKey, String.valueOf(PaymentStatus.PENDING), 30);
 
             //return the DTO
             return modelMapper.map(savedOrder, OrderDTO.class);

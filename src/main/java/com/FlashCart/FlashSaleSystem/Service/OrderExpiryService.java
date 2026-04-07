@@ -9,6 +9,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -26,34 +27,28 @@ public class OrderExpiryService {
     @Scheduled(fixedRate = 60000) // every 1 min
     public void handleExpiredOrders() {
 
-        // scan all expiry keys
-        Set<String> keys = redisTemplate.keys("order:expiry:*");
+        List<Order> pendingOrders = orderRepository.findAll();
 
-        for (String key : keys) {
-            Long ttl = redisTemplate.getExpire(key);
+        for (Order order : pendingOrders) {
 
-            // if expired (TTL <= 0)
-            if (ttl != null && ttl <= 0) {
+            if (!order.getPaymentStatus().equals(PaymentStatus.PENDING.name())) {
+                continue;
+            }
 
-                String orderIdStr = key.split(":")[2];
-                Long orderId = Long.parseLong(orderIdStr);
+            String expiryKey = "order:expiry:" + order.getOrderId();
 
-                Order order = orderRepository.findById(orderId).orElse(null);
+            Boolean exists = redisTemplate.hasKey(expiryKey);
 
-                if (order != null && order.getPaymentStatus().equals("PENDING")) {
+            // if key DOES NOT exist → expired
+            if (Boolean.FALSE.equals(exists)) {
 
-                    // cancel order
-                    order.setStatus(String.valueOf(OrderStatus.CANCELLED));
-                    order.setPaymentStatus(String.valueOf(PaymentStatus.FAILED));
+                order.setStatus(OrderStatus.CANCELLED.name());
+                order.setPaymentStatus(PaymentStatus.FAILED.name());
 
-                    // return stock
-                    String stockKey = "flashSale:stock" + order.getFlashSale().getSaleId();
-                    redisService.increaseStock(stockKey, order.getQuantity());
+                String stockKey = "FlashSale:Stock" + order.getFlashSale().getSaleId();
+                redisService.increaseStock(stockKey, order.getQuantity());
 
-                    orderRepository.save(order);
-                }
-
-                redisTemplate.delete(key);
+                orderRepository.save(order);
             }
         }
     }
