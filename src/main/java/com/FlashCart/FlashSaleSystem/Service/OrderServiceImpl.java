@@ -1,6 +1,7 @@
 package com.FlashCart.FlashSaleSystem.Service;
 
 import com.FlashCart.FlashSaleSystem.DTOs.OrderDTO;
+import com.FlashCart.FlashSaleSystem.DTOs.OrderRequestDTO;
 import com.FlashCart.FlashSaleSystem.Enums.OrderStatus;
 import com.FlashCart.FlashSaleSystem.Enums.PaymentStatus;
 import com.FlashCart.FlashSaleSystem.ErrorControl.APIException;
@@ -36,10 +37,12 @@ public class OrderServiceImpl implements OrderService{
     private RedisService redisService;
     @Autowired
     private RedisLockService redisLockService;
+    @Autowired
+    private KafkaProducerService kafkaProducerService;
 
     @Override
     @Transactional
-    public OrderDTO purchase(Long saleId, Long userId, Integer quantity) {
+    public String purchase(Long saleId, Long userId, Integer quantity) {
 
         //checking if user exists
         User currUser = userRepository.findById(userId).orElseThrow(()->
@@ -72,27 +75,16 @@ public class OrderServiceImpl implements OrderService{
                 redisService.increaseStock(redisKey, quantity);
                 throw new APIException("Out of Stock!!");
             }
-            //if (sale.getSaleStock()<quantity) throw new APIException("Out of Stock!!");
-            //create the order
-            Order currentOrder = new Order();
-            currentOrder.setIdempotencyKey(key);
-            currentOrder.setCreatedAt(LocalDateTime.now());
-            currentOrder.setPaymentStatus(String.valueOf(PaymentStatus.PENDING));
-            currentOrder.setStatus(String.valueOf(OrderStatus.CREATED));
-            currentOrder.setUser(currUser);
-            currentOrder.setFlashSale(sale);
-            //sale.setSaleStock(sale.getSaleStock()-quantity); don't using this, because we are caching the stock in redis and updated there
-            currentOrder.setQuantity(quantity);
-            currentOrder.setTotalPrice(sale.getSpecialPrice() * quantity);
-            //save the order
-            Order savedOrder = orderRepository.save(currentOrder);
 
-            //adding time to live for the order if the payment not done for order in stipulated time
-            String expiryKey = "order:expiry:" + savedOrder.getOrderId();
-            redisService.setWithTTL(expiryKey, String.valueOf(PaymentStatus.PENDING), 30);
+            //send the request to create and store the order to the kafka topic
+            OrderRequestDTO request = new OrderRequestDTO();
+            request.setSaleId(saleId);
+            request.setUserId(userId);
+            request.setQuantity(quantity);
+            kafkaProducerService.sendOrder(request);
 
-            //return the DTO
-            return modelMapper.map(savedOrder, OrderDTO.class);
+            //return the message
+            return "Order Processing.......";
         }finally {
             //releasing the lock
             redisLockService.releaseLock(lockKey);

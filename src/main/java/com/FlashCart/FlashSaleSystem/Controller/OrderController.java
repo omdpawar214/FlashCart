@@ -18,7 +18,7 @@ public class OrderController {
 
     //method to purchase the order
     @RequestMapping("/flashSale/{saleId}/user/{userId}")
-    public ResponseEntity<OrderDTO> purchaseTheItemFromSale(@PathVariable Long saleId,
+    public ResponseEntity<String> purchaseTheItemFromSale(@PathVariable Long saleId,
                                                             @PathVariable Long userId,
                                                             @RequestParam Integer quantity){
         return new ResponseEntity<>(orderService.purchase(saleId,userId,quantity), HttpStatus.OK);
