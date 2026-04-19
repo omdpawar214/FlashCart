@@ -41,6 +41,12 @@ public class KafkaConsumerService {
         FlashSale sale = flashSaleRepository.findById(request.getSaleId()).orElseThrow(()->
                 new ResourceNotFoundException("flashSale","FlashSaleId", request.getSaleId()));
 
+        //safety check on the quantity
+        if (sale.getSaleStock() < request.getQuantity()) {
+            System.out.println("Rejected due to DB stock check");
+            return;
+        }
+
         String key = request.getSaleId()+"_"+request.getUserId();
         Order existingOrder = orderRepository.findByIdempotencyKey(key);
         if (existingOrder!=null) throw new APIException("Current User have already ordered From this sale");
