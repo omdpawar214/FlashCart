@@ -55,14 +55,6 @@ public class OrderServiceImpl implements OrderService{
             throw new APIException("Sale with id-"+saleId+" is InActive");
         }
 
-        // adding the redis distributed lock to further process
-        String lockKey = "lock:flashSale:"+saleId;
-        boolean lockAcquired = redisLockService.acquireLock(lockKey,3000);
-        if (!lockAcquired) {
-            throw new APIException("Too many requests, please try again");
-        }
-        try {//critical section
-
             //check for Idempotency key constraints
             String key = saleId+"_"+userId;
             Order existingOrder = orderRepository.findByIdempotencyKey(key);
@@ -70,9 +62,8 @@ public class OrderServiceImpl implements OrderService{
 
             //check for the quantity is available using redis and decrementing the quantity from redis not touching the database
             String redisKey = "FlashSale:Stock" + sale.getSaleId();
-            Long remaining = redisService.decreaseStock(redisKey, quantity);
-            if (remaining < 0) {
-                redisService.increaseStock(redisKey, quantity);
+            Long remaining = redisService.decreaseStockAtomically(redisKey, quantity);
+            if (remaining == null || remaining < 0) {
                 throw new APIException("Out of Stock!!");
             }
 
@@ -85,10 +76,7 @@ public class OrderServiceImpl implements OrderService{
 
             //return the message
             return "Order Processing.......";
-        }finally {
-            //releasing the lock
-            redisLockService.releaseLock(lockKey);
-        }
+
     }
 
     @Override
